@@ -38,33 +38,7 @@ def find_path_brs(source_point, destination_point, mesh):
 
     boxes_path.reverse()
 
-    return _generate_points_path_from_box_path(boxes_path), explored
-
-
-def _generate_points_path_from_box_path(boxes):
-    paths = []
-    # FIXME only use middle point rn
-    for box in boxes:
-        tlx, brx, tly, bry = box
-        middle_x = (tlx + brx) // 2
-        middle_y = (tly + bry) // 2
-        pt = (middle_x, middle_y)
-        paths.append(pt)
-    return paths
-
-
-def _find_box_middle(box):
-    """
-    calculate and return the middle point of the given box
-
-    :param box: tuple containing top-left x, bottom-right x, top-left y,
-                bottom-right y coordinates of the box
-    :type box: tuple
-    :return: middle point (x, y) of the box
-    :rtype: tuple
-    """
-
-    tlx, brx, tly, bry = box
-    middle_x = (tlx + brx) // 2
-    middle_y = (tly + bry) // 2
-    return middle_x, middle_y
+    return (
+        gen_path_from_boxes(boxes_path, source_point, destination_point),
+        explored,
+    )
