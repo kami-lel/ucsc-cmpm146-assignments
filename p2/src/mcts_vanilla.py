@@ -20,7 +20,7 @@ def traverse_nodes(node, board, state, bot_identity):
     :type board: Baord
     :param state: The state of the game.
     :type state:
-    :param bot_identity: The bot's identity, either 1 or 2.
+    :param bot_identity: The bot's identity, either 0 or 1.
     :type bot_identity: int
     :return: A node from which the next stage of the search can proceed,
     along with the associated state.
@@ -29,7 +29,7 @@ def traverse_nodes(node, board, state, bot_identity):
         return node, state
 
     else:
-        is_opponent = True  # TODO
+        is_opponent = bool(bot_identity)
 
         highest_ucb = sys.float_info.min
         best_action = None
@@ -42,7 +42,13 @@ def traverse_nodes(node, board, state, bot_identity):
                 highest_ucb = child_node_ucb
                 best_node = child_node
 
-        return best_node, board.next_state(state, best_action)
+        # recursively traverse
+        return traverse_nodes(
+            best_node,
+            board,
+            board.next_state(state, best_action),
+            1 - bot_identity,
+        )
 
 
 def expand_leaf(node: MCTSNode, board: Board, state):
@@ -114,7 +120,6 @@ def ucb(node: MCTSNode, is_opponent: bool):
     :param is_opponent: A boolean indicating whether the last action was performed by the MCTS bot.
     :return: The value of the UCB function for the given node.
     """
-    # TODO never is is_opponent
     w = node.wins
     n = node.visits
     t = node.parent.visits
@@ -173,7 +178,7 @@ def think(board: Board, current_state):
         # Do MCTS - This is all you!
 
         # selection
-        node, state = traverse_nodes(node, board, state, bot_identity)
+        node, state = traverse_nodes(node, board, state, bot_identity - 1)
 
         # expansion
         node, state = expand_leaf(node, board, state)
