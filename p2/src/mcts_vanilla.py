@@ -1,6 +1,6 @@
 from mcts_node import MCTSNode
 from p2_t3 import Board
-from random import choice
+from random import choice, randint
 from math import sqrt, log
 import sys
 
@@ -25,10 +25,11 @@ def traverse_nodes(node, board, state, bot_identity):
     :return: A node from which the next stage of the search can proceed,
     along with the associated state.
     """
-    return node, state  # HACK
-
     is_opponent = True  # BUG what does it mean
-    # BUG not consider terminal state
+
+    # make possible to recursively call this
+    if not node.child_nodes:  # reach a leaf node
+        return node, state
 
     # find child node w/ least ucb
     best_action = None
@@ -40,10 +41,13 @@ def traverse_nodes(node, board, state, bot_identity):
             best_action = action
             least_ucb = node_ucb
 
-    best_node = node.child_nodes[best_action]
-    new_state = board.next_state(state, best_action)
+    best_child_node = node.child_nodes[best_action]
+    new_child_state = board.next_state(state, best_action)
 
-    return best_node, new_state
+    # recursively find the best leaf node
+    return traverse_nodes(
+        best_child_node, board, new_child_state, bot_identity
+    )
 
 
 def expand_leaf(node: MCTSNode, board: Board, state):
@@ -56,16 +60,21 @@ def expand_leaf(node: MCTSNode, board: Board, state):
     :param state: The state of the game.
     :return: The added child node and the state associated with that node.
     """
-    return node, state  # HACK
 
-    # TODO TODO
+    # randomly select a action from parent node
+    action_idx = randint(0, len(node.untried_actions) - 1)
+    action = node.untried_actions[action_idx]
+    node.untried_actions.pop(action_idx)
 
-    action = ""
+    # create new state associated with the new node
     new_state = board.next_state(state, action)
     action_list = board.legal_actions(new_state)
 
     new_node = MCTSNode(node, action, action_list)
-    return new_node, action
+
+    node.child_nodes[action] = new_node
+
+    return new_node, state
 
 
 def rollout(board: Board, state):
@@ -76,11 +85,9 @@ def rollout(board: Board, state):
     :param state: The state of the game.
     :return: The terminal game state.
     """
-    return  # TODO
-
     while not board.is_ended(state):
-        actions = board.legal_actions(state)
-        action = random.choice(actions)  # Randomly select an action
+        possible_actions = board.legal_actions(state)
+        action = choice(possible_actions)  # randomly select action
         state = board.next_state(state, action)
 
     return state
@@ -94,7 +101,6 @@ def backpropagate(node: MCTSNode | None, won: bool):
     :param node: A leaf node.
     :param won: An indicator of whether the bot won or lost the game.
     """
-    return  # TODO
     while node is not None:
         node.visits += 1
         if won:
@@ -110,6 +116,7 @@ def ucb(node: MCTSNode, is_opponent: bool):
     :param is_opponent: A boolean indicating whether the last action was performed by the MCTS bot.
     :return: The value of the UCB function for the given node.
     """
+    # TODO never is is_opponent
     w = node.wins
     n = node.visits
     t = node.parent.visits
@@ -163,7 +170,7 @@ def think(board: Board, current_state):
     )
 
     # for _ in range(NUM_NODES):
-    for _ in range(1):  # HACK replce w/ prev line
+    for _ in range(3):  # HACK replce w/ prev line
         state = current_state
         node = root_node
 
@@ -173,12 +180,15 @@ def think(board: Board, current_state):
         node, state = traverse_nodes(node, board, state, bot_identity)
 
         # expansion
-        node, state = expand_leaf(node, board, state)
+        new_node, state = expand_leaf(node, board, state)
 
         # simulation
-        # back-propagation
+        terminal_state = rollout(board, state)
 
-    print(node.tree_to_string(1, 4), file=sys.stderr)  # HACK
+        # back-propagation
+        backpropagate(new_node, is_win(board, terminal_state, bot_identity))
+
+    print("\n", root_node.tree_to_string(10), file=sys.stderr)  # HACK
 
     # return an action, typically the most frequently used action (from the root)
     # or the action with the best estimated win rate.
