@@ -4,7 +4,7 @@ from random import choice, randint
 from math import sqrt, log
 import sys
 
-NUM_NODES = 2  # tree size
+NUM_NODES = 100  # tree size
 EXPLORE_FACTION = 2.0
 
 
