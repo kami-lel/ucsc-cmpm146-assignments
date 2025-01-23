@@ -1,10 +1,10 @@
 from mcts_node import MCTSNode
 from p2_t3 import Board
-from random import choice, randint
+from random import randint
 from math import sqrt, log
 import sys
 
-NUM_NODES = 10  # tree size
+DFT_NUM_NODES = 1000  # tree size
 EXPLORE_FACTION = 2.0
 
 
@@ -220,7 +220,7 @@ def is_win(board: Board, state, identity_of_bot: int):
     return outcome[identity_of_bot] == 1
 
 
-def think(board: Board, current_state):
+def think(board: Board, current_state, size=DFT_NUM_NODES):
     """
     perform MCTS by sampling games and calling the appropriate functions
     to construct the game tree.
@@ -236,7 +236,7 @@ def think(board: Board, current_state):
         action_list=board.legal_actions(current_state),
     )
 
-    for _ in range(NUM_NODES):
+    for _ in range(size):
         state = current_state
         node = root_node
 
