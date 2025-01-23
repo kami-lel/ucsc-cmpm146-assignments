@@ -4,7 +4,7 @@ from random import choice, randint
 from math import sqrt, log
 import sys
 
-NUM_NODES = 50  # tree size
+NUM_NODES = 2  # tree size
 EXPLORE_FACTION = 2.0
 
 
@@ -25,7 +25,7 @@ def traverse_nodes(node, board, state, bot_identity):
     :return: A node from which the next stage of the search can proceed,
     along with the associated state.
     """
-    if node.untried_actions:
+    if node.untried_actions or board.is_ended(state):
         return node, state
 
     else:
@@ -42,13 +42,14 @@ def traverse_nodes(node, board, state, bot_identity):
                 highest_ucb = child_node_ucb
                 best_node = child_node
 
-        # recursively traverse
-        return traverse_nodes(
-            best_node,
-            board,
-            board.next_state(state, best_action),
-            1 - bot_identity,
-        )
+        if best_action:
+            # recursively traverse
+            next_state = board.next_state(state, best_action)
+            return traverse_nodes(
+                best_node, board, next_state, 1 - bot_identity
+            )
+        else:
+            return node, state
 
 
 def expand_leaf(node: MCTSNode, board: Board, state):
