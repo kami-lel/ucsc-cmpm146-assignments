@@ -2,6 +2,7 @@ import sys
 from timeit import default_timer as time
 import p2_t3
 import mcts_vanilla
+import mcts_vanilla2
 import mcts_modified
 import random_bot
 import rollout_bot
@@ -10,6 +11,7 @@ players = dict(
     random_bot=random_bot.think,
     rollout_bot=rollout_bot.think,
     mcts_vanilla=mcts_vanilla.think,
+    mcts_vanilla2=mcts_vanilla2.think,
     mcts_modified=mcts_modified.think,
 )
 
@@ -22,18 +24,18 @@ if len(sys.argv) != 3:
 
 p1 = sys.argv[1]
 if p1 not in players:
-    print("p1 not in "+players.keys().join(","))
+    print("p1 not in " + players.keys().join(","))
     exit(1)
 p2 = sys.argv[2]
 if p2 not in players:
-    print("p2 not in "+players.keys().join(","))
+    print("p2 not in " + players.keys().join(","))
     exit(1)
 
 player1 = players[p1]
 player2 = players[p2]
 
 rounds = 100
-wins = {'draw':0, 1:0, 2:0}
+wins = {"draw": 0, 1: 0, 2: 0}
 
 start = time()  # To log how much time the simulation takes.
 for i in range(rounds):
@@ -51,7 +53,7 @@ for i in range(rounds):
     print("Finished!")
     print()
     final_score = board.points_values(state)
-    winner = 'draw'
+    winner = "draw"
     if final_score[1] == 1:
         winner = 1
     elif final_score[2] == 1:
@@ -64,4 +66,4 @@ print("Final win counts:", dict(wins))
 
 # Also output the time elapsed.
 end = time()
-print(end - start, ' seconds')
+print(end - start, " seconds")
