@@ -18,7 +18,7 @@ players = dict(
 board = p2_t3.Board()
 state0 = board.starting_state()
 
-if len(sys.argv) != 3:
+if len(sys.argv) < 3:
     print("Need two player arguments")
     exit(1)
 
@@ -30,6 +30,13 @@ p2 = sys.argv[2]
 if p2 not in players:
     print("p2 not in " + players.keys().join(","))
     exit(1)
+
+if len(sys.argv) >= 4:
+    p1s = int(sys.argv[3])
+    p2s = int(sys.argv[3])
+else:
+    p1s = p2s = 1000
+
 
 player1 = players[p1]
 player2 = players[p2]
@@ -47,7 +54,8 @@ for i in range(rounds):
     last_action = None
     current_player = player1
     while not board.is_ended(state):
-        last_action = current_player(board, state)
+        size = p1s if current_player is player1 else p2s
+        last_action = current_player(board, state, size=size)
         state = board.next_state(state, last_action)
         current_player = player1 if current_player == player2 else player2
     print("Finished!")
