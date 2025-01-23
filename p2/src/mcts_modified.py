@@ -4,7 +4,7 @@ from random import choice, randint
 from math import sqrt, log
 import sys
 
-NUM_NODES = 100  # tree size
+NUM_NODES = 10  # tree size
 EXPLORE_FACTION = 2.0
 
 
@@ -92,10 +92,74 @@ def rollout(board: Board, state):
     """
     while not board.is_ended(state):
         possible_actions = board.legal_actions(state)
-        action = choice(possible_actions)  # randomly select action
+        # use heuristic stragegy
+        action = max(
+            possible_actions, key=lambda a: _evaluate_action(board, state, a)
+        )
         state = board.next_state(state, action)
 
     return state
+
+
+def _evaluate_action(board: Board, state, action):
+    """
+    evaluates the potential effectiveness of an action using a heuristic.
+
+    :param board: The game setup.
+    :param state: The current state of the game.
+    :param action: The action being evaluated.
+    :return: A numeric score for the action's potential effectiveness.
+    """
+    R, C, r, c = action
+    current_player = board.current_player(state)
+    owned_boxes = board.owned_boxes(state)
+
+    # Heuristic priorities (example values)
+    win_weight = 1000
+    block_opponent_weight = 500
+    center_position_weight = 100
+    corner_position_weight = 50
+
+    score = 0
+
+    # Check if the action results in winning a box
+    if owned_boxes.get((r, c), 0) == 0:
+        if current_player == 1:
+            if all(
+                owned_boxes.get((i, j), 0) in [0, 1]
+                for i in range(3)
+                for j in range(3)
+            ):
+                score += win_weight
+            if any(
+                owned_boxes.get((i, j), 0) == 2
+                for i in range(3)
+                for j in range(3)
+            ):
+                score += block_opponent_weight
+        elif current_player == 2:
+            if all(
+                owned_boxes.get((i, j), 0) in [0, 2]
+                for i in range(3)
+                for j in range(3)
+            ):
+                score += win_weight
+            if any(
+                owned_boxes.get((i, j), 0) == 1
+                for i in range(3)
+                for j in range(3)
+            ):
+                score += block_opponent_weight
+
+    # Prefer center positions
+    if (r, c) == (1, 1):
+        score += center_position_weight
+
+    # Prefer corner positions
+    if (r, c) in [(0, 0), (0, 2), (2, 0), (2, 2)]:
+        score += corner_position_weight
+
+    return score
 
 
 def backpropagate(node: MCTSNode | None, won: bool):
