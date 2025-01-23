@@ -25,29 +25,24 @@ def traverse_nodes(node, board, state, bot_identity):
     :return: A node from which the next stage of the search can proceed,
     along with the associated state.
     """
-    is_opponent = True  # BUG what does it mean
-
-    # make possible to recursively call this
-    if not node.child_nodes:  # reach a leaf node
+    if node.untried_actions:
         return node, state
 
-    # find child node w/ least ucb
-    best_action = None
-    least_ucb = sys.float_info.max
+    else:
+        is_opponent = True  # TODO
 
-    for action, child_node in node.child_nodes.items():
-        node_ucb = ucb(child_node, is_opponent)
-        if node_ucb < least_ucb:
-            best_action = action
-            least_ucb = node_ucb
+        highest_ucb = sys.float_info.min
+        best_action = None
+        best_node = None
 
-    best_child_node = node.child_nodes[best_action]
-    new_child_state = board.next_state(state, best_action)
+        for action, child_node in node.child_nodes.items():
+            child_node_ucb = ucb(child_node, is_opponent)
+            if child_node_ucb > highest_ucb:
+                best_action = action
+                highest_ucb = child_node_ucb
+                best_node = child_node
 
-    # recursively find the best leaf node
-    return traverse_nodes(
-        best_child_node, board, new_child_state, bot_identity
-    )
+        return best_node, board.next_state(state, best_action)
 
 
 def expand_leaf(node: MCTSNode, board: Board, state):
@@ -60,6 +55,9 @@ def expand_leaf(node: MCTSNode, board: Board, state):
     :param state: The state of the game.
     :return: The added child node and the state associated with that node.
     """
+    # deal with terminal node
+    if board.is_ended(state) or not node.untried_actions:
+        return node, state
 
     # randomly select a action from parent node
     action_idx = randint(0, len(node.untried_actions) - 1)
@@ -131,7 +129,6 @@ def get_best_action(root_node: MCTSNode):
     :param root_node: The root node.
     :return: The best action from the root node.
     """
-    return (0, 0, 0, 0)  # HACK
 
     best_action = None
     max_wins = -1
@@ -169,8 +166,7 @@ def think(board: Board, current_state):
         action_list=board.legal_actions(current_state),
     )
 
-    # for _ in range(NUM_NODES):
-    for _ in range(3):  # HACK replce w/ prev line
+    for _ in range(NUM_NODES):
         state = current_state
         node = root_node
 
@@ -180,15 +176,13 @@ def think(board: Board, current_state):
         node, state = traverse_nodes(node, board, state, bot_identity)
 
         # expansion
-        new_node, state = expand_leaf(node, board, state)
+        node, state = expand_leaf(node, board, state)
 
         # simulation
         terminal_state = rollout(board, state)
 
         # back-propagation
-        backpropagate(new_node, is_win(board, terminal_state, bot_identity))
-
-    print("\n", root_node.tree_to_string(10), file=sys.stderr)  # HACK
+        backpropagate(node, is_win(board, terminal_state, bot_identity))
 
     # return an action, typically the most frequently used action (from the root)
     # or the action with the best estimated win rate.
