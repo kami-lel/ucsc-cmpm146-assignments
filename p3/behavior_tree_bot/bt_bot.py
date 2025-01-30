@@ -6,17 +6,11 @@
 // starting point, or you can throw it out entirely and replace it with your
 // own.
 """
-
 import inspect
 import logging
 import os
 import sys
 import traceback
-
-from behavior_tree_bot.behaviors import *
-from behavior_tree_bot.bt_nodes import Action, Check, Selector, Sequence
-from behavior_tree_bot.checks import *
-from planet_wars import PlanetWars, finish_turn
 
 logging.basicConfig(
     filename=__file__[:-3] + ".log", filemode="w", level=logging.DEBUG
@@ -26,6 +20,11 @@ currentdir = os.path.dirname(
 )
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
+
+from behavior_tree_bot.behaviors import *
+from behavior_tree_bot.bt_nodes import Action, Check, Selector, Sequence
+from behavior_tree_bot.checks import *
+from planet_wars import PlanetWars, finish_turn
 
 
 # You have to improve this tree or create an entire new one that is capable
