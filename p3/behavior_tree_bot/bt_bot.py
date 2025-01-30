@@ -6,21 +6,21 @@
 // starting point, or you can throw it out entirely and replace it with your
 // own.
 """
+
 import inspect
 import logging
 import os
 import sys
 import traceback
 
-from behaviors import *
-from bt_nodes import Action, Check, Selector, Sequence
-from checks import *
+from behavior_tree_bot.behaviors import *
+from behavior_tree_bot.bt_nodes import Action, Check, Selector, Sequence
+from behavior_tree_bot.checks import *
 from planet_wars import PlanetWars, finish_turn
 
 logging.basicConfig(
     filename=__file__[:-3] + ".log", filemode="w", level=logging.DEBUG
 )
-
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )
@@ -62,11 +62,6 @@ if __name__ == "__main__":
     )
 
     behavior_tree = setup_behavior_tree()
-
-    if True:  # HACK
-        print(behavior_tree.tree_to_string())
-        exit()
-
     try:
         map_data = ""
         while True:
