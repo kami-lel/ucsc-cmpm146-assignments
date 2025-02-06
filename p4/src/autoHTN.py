@@ -1,3 +1,4 @@
+import sys
 import argparse
 import pyhop
 import json
@@ -92,8 +93,6 @@ def declare_methods(data, is_debug=False):
     for task, method_entries in tasks.items():
         ordered_entries = sorted(method_entries, key=_get_tech_for_sort)
         tasks[task] = ordered_entries
-
-    # TODO order methods
 
     if is_debug:
         print("tasks:")
@@ -233,7 +232,7 @@ def test_case_f(state, verbose):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a specific test case.")
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--test",
         choices=["a", "b", "c", "d", "e", "f"],
@@ -252,8 +251,17 @@ if __name__ == "__main__":
         default=0,
         help="Increase output verbosity",
     )
+    parser.add_argument(
+        "-r",
+        "--recursion",
+        type=int,
+        default=-1,
+        help="Set the recursion limit (-1 for no change)",
+    )
 
     args = parser.parse_args()
+    if args.recursion > 1:
+        sys.setrecursionlimit(args.recursion)
 
     rules_filename = "crafting.json"
     with open(rules_filename) as f:
