@@ -97,7 +97,9 @@ def declare_methods(data, is_debug=False):
 
     # order methods based on technology
     for task, method_entries in tasks.items():
-        ordered_entries = sorted(method_entries, key=_get_tech_for_sort)
+        ordered_entries = sorted(
+            method_entries, key=_get_tech_for_sort, reverse=True
+        )
         tasks[task] = ordered_entries
 
     if is_debug:
@@ -149,33 +151,28 @@ def declare_operators(data):
     pyhop.declare_operators(*ops)
 
 
-def _get_task_name(task):
-    return task[0]
-
-
 def add_heuristic(data, ID):
     # prune search branch if heuristic() returns True
     # do not change parameters to heuristic(), but can add more heuristic functions with the same parameters:
     # e.g. def heuristic2(...); pyhop.add_check(heuristic2)
-    def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
-        curr_task_name = _get_task_name(curr_task)
 
-        if re.fullmatch(r"produce_.+", curr_task_name):
-            return (
-                sum(
-                    _get_task_name(task) == curr_task_name
-                    for task in calling_stack
-                )
-                > 3
-            )
-        # TODO
-        # your code here
-        return False  # if True, prune this branch
+    def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
+        curr_task_name = curr_task[0]
+
+        if curr_task_name in (
+            "produce_wooden_axe",
+            "produce_stone_axe",
+            "produce_iron_axe",
+        ):
+            return not any(task[0] == "op_punch for wood" for task in plan)
 
     pyhop.add_check(heuristic)
 
 
 def set_up_state(data, ID, time=0):
+    # HACK
+    global cnt
+    cnt = 0
     state = pyhop.State("state")
     state.time = {ID: time}
 
@@ -315,23 +312,17 @@ if __name__ == "__main__":
             test_case_f(state, args.verbosity)
         else:
 
+            #           pyhop.pyhop(
+            #               state,
+            #               [("have_enough", "agent", "cobble", 8)],
+            #               verbose=args.verbosity,
+            #           )
+
+            state.time["agent"] = 50000
             pyhop.pyhop(
                 state,
-                [("have_enough", "agent", "cobble", 8)],
+                [("have_enough", "agent", "wood", 1)],
                 verbose=args.verbosity,
             )
-
-#            state.cobble["agent"] = 10
-#            pyhop.pyhop(
-#                state,
-#                [("have_enough", "agent", "furnace", 1)],
-#                verbose=args.verbosity,
-#            )
-
-#            pyhop.pyhop(
-#                state,
-#                [("have_enough", "agent", "iron_pickaxe", 1)],
-#                verbose=args.verbosity,
-#            )
 
 # pyhop.pyhop(state, goals, args.verbosity)
