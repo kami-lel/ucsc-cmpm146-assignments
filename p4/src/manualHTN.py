@@ -18,7 +18,7 @@ def op_craft_wooden_axe_at_bench(state, ID):
         and state.plank[ID] >= 3
         and state.stick[ID] >= 2
     ):
-        state.made_wooden_axe[ID] = True
+        state.wooden_axe[ID] = 1
         state.plank[ID] -= 3
         state.stick[ID] -= 2
         state.time[ID] -= 1
@@ -48,7 +48,7 @@ def op_craft_stick(state, ID):
 
 def op_craft_bench(state, ID):
     if state.time[ID] >= 1 and state.plank[ID] >= 4:
-        state.made_bench[ID] = True
+        state.bench[ID] = 1
         state.plank[ID] -= 4
         state.time[ID] -= 1
         return state
@@ -106,11 +106,7 @@ def produce(state, ID, item):
         return [("have_enough", ID, "wood", 2), ("op_craft_plank", ID)]
 
     elif item == "bench":
-        if state.made_bench[ID] is True:
-            return False
-        else:
-            state.made_bench[ID] = True
-        return [("produce_bench", ID)]
+        return [("have_enough", ID, "plank", 4), ("op_craft_bench", ID)]
 
     else:
         return False
@@ -155,7 +151,6 @@ def craft_wooden_axe_at_bench(state, ID):
 
 
 pyhop.declare_methods("produce_wood", use_wooden_axe_for_wood, punch_for_wood)
-pyhop.declare_methods("produce_wood", punch_for_wood)  # HACK
 pyhop.declare_methods("produce_wooden_axe", craft_wooden_axe_at_bench)
 pyhop.declare_methods("produce_stick", produce_stick)
 pyhop.declare_methods("produce_plank", produce_plank)
@@ -166,22 +161,16 @@ pyhop.declare_methods("produce_bench", produce_bench)
 # declare state
 state = pyhop.State("state")
 state.wood = {"agent": 0}
-state.wood = {"agent": 5}
-state.bench = {"agent": 0}
 state.stick = {"agent": 0}
-state.stick = {"agent": 12}  # HACK
 state.plank = {"agent": 0}
 state.time = {"agent": 46}
+state.wooden_axe = {"agent": 0}
 state.made_wooden_axe = {"agent": False}
+state.bench = {"agent": 0}
 state.made_bench = {"agent": False}
 
-# TODO your code here
 
 pyhop.print_operators()
 pyhop.print_methods()
 
-# HACK
-# pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 12)], verbose=3)
-
-# pyhop.pyhop(state, [("produce", "bench", 1)], verbose=2)
-pyhop.pyhop(state, [("produce", "bench", 1)], verbose=2)
+pyhop.pyhop(state, [("have_enough", "agent", "wood", 12)], verbose=3)
