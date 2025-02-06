@@ -56,7 +56,8 @@ def declare_methods(data, is_debug=False):
     for recipet_name, rule in data["Recipes"].items():
 
         match1 = re.fullmatch(r".+ for (.+)", recipet_name)
-        match2 = re.fullmatch(r"craft (.+)", recipet_name)
+        match2 = re.fullmatch(r"craft (.+) at bench", recipet_name)
+        match3 = re.fullmatch(r"craft (.+)", recipet_name)
 
         if match1:
             resource_name = match1.group(1)
@@ -67,8 +68,10 @@ def declare_methods(data, is_debug=False):
 
             tasks[task_name].append(make_method(recipet_name, rule))
 
-        elif match2:
-            task_name = "produce_{}".format(match2.group(1))
+        elif match2 or match3:
+            task_name = "produce_{}".format(
+                match2.group(1) if match2 else match3.group(1)
+            )
             tasks[task_name] = [make_method(recipet_name, rule)]
 
         else:
@@ -79,8 +82,9 @@ def declare_methods(data, is_debug=False):
     if is_debug:
         print("tasks:")
         for task, methods in tasks.items():
-            methods_opt = [repr(met("", "")) for met in methods]
-            print("{}\t{}".format(task, ",".join(c for c in methods_opt)))
+            print(task)
+            for met in methods:
+                print("\t", repr(met("", "")))
 
     for task, methods in tasks.items():
         pyhop.declare_methods(task, *methods)
