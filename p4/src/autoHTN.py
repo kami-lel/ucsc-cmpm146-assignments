@@ -84,6 +84,12 @@ def declare_methods(data, is_debug=False):
             methods = recipet_name, make_method(recipet_name, rule)
             tasks[task_name].append(methods)
 
+        elif recipet_name == "smelt ore in furnace":
+            task_name = "produce_ingot"
+            tasks[task_name] = [
+                (recipet_name, make_method(recipet_name, rule))
+            ]
+
         else:
             tasks[recipet_name] = [
                 (recipet_name, make_method(recipet_name, rule))
@@ -143,11 +149,25 @@ def declare_operators(data):
     pyhop.declare_operators(*ops)
 
 
+def _get_task_name(task):
+    return task[0]
+
+
 def add_heuristic(data, ID):
     # prune search branch if heuristic() returns True
     # do not change parameters to heuristic(), but can add more heuristic functions with the same parameters:
     # e.g. def heuristic2(...); pyhop.add_check(heuristic2)
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
+        curr_task_name = _get_task_name(curr_task)
+
+        if curr_task_name.startswith("produce_"):
+            return (
+                sum(
+                    _get_task_name(task) == curr_task_name
+                    for task in calling_stack
+                )
+                > 1
+            )
         # TODO
         # your code here
         return False  # if True, prune this branch
@@ -294,4 +314,17 @@ if __name__ == "__main__":
         elif args.test == "f":
             test_case_f(state, args.verbosity)
         else:
-            pyhop.pyhop(state, goals, args.verbosity)
+
+            pyhop.pyhop(
+                state,
+                [("have_enough", "agent", "ingot", 1)],
+                verbose=args.verbosity,
+            )
+
+#            pyhop.pyhop(
+#                state,
+#                [("have_enough", "agent", "iron_pickaxe", 1)],
+#                verbose=args.verbosity,
+#            )
+
+# pyhop.pyhop(state, goals, args.verbosity)
