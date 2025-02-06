@@ -44,7 +44,7 @@ def make_method(name, rule):
     return method
 
 
-def declare_methods(data):
+def declare_methods(data, is_debug=False):
     # some recipes are faster than others for the same product even though they might require extra tools
     # sort the recipes so that faster recipes go first
 
@@ -55,21 +55,32 @@ def declare_methods(data):
 
     for recipet_name, rule in data["Recipes"].items():
 
-        match = re.fullmatch(r".+ for (.+)", recipet_name)
+        match1 = re.fullmatch(r".+ for (.+)", recipet_name)
+        match2 = re.fullmatch(r"craft (.+)", recipet_name)
 
-        if match:
-            resource_name = match.group(1)
-            method_name = "produce_{}".format(resource_name)
+        if match1:
+            resource_name = match1.group(1)
+            task_name = "produce_{}".format(resource_name)
 
-            if method_name not in tasks:
-                tasks[method_name] = []
+            if task_name not in tasks:
+                tasks[task_name] = []
 
-            tasks[method_name].append(make_method(recipet_name, rule))
+            tasks[task_name].append(make_method(recipet_name, rule))
+
+        elif match2:
+            task_name = "produce_{}".format(match2.group(1))
+            tasks[task_name] = [make_method(recipet_name, rule)]
 
         else:
             tasks[recipet_name] = [make_method(recipet_name, rule)]
 
     # TODO order methods
+
+    if is_debug:
+        print("tasks:")
+        for task, methods in tasks.items():
+            methods_opt = [repr(met("", "")) for met in methods]
+            print("{}\t{}".format(task, ",".join(c for c in methods_opt)))
 
     for task, methods in tasks.items():
         pyhop.declare_methods(task, *methods)
@@ -147,19 +158,19 @@ def set_up_goals(data, ID):
 
 
 def test_case_a(state, verbose):
-    state.time = 1
+    state.time["agent"] = 1
     state.plank["agent"] = 1
     pyhop.pyhop(state, [("have_enough", "agent", "plank", 1)], verbose=verbose)
 
 
 def test_case_b(state, verbose):
-    state.time = 300
+    state.time["agent"] = 300
     state.plank["agent"] = 0
     pyhop.pyhop(state, [("have_enough", "agent", "plank", 1)], verbose=verbose)
 
 
 def test_case_c(state, verbose):
-    state.time = 10
+    state.time["agent"] = 10
     state.plank["agent"] = 3
     state.stick["agent"] = 2
     pyhop.pyhop(
@@ -168,14 +179,14 @@ def test_case_c(state, verbose):
 
 
 def test_case_d(state, verbose):
-    state.time = 100
+    state.time["agent"] = 100
     pyhop.pyhop(
         state, [("have_enough", "agent", "iron_pickaxe", 1)], verbose=verbose
     )
 
 
 def test_case_e(state, verbose):
-    state.time = 175
+    state.time["agent"] = 175
     pyhop.pyhop(
         state,
         [
@@ -187,7 +198,7 @@ def test_case_e(state, verbose):
 
 
 def test_case_f(state, verbose):
-    state.time = 250
+    state.time["agent"] = 250
     pyhop.pyhop(
         state,
         [
@@ -204,6 +215,11 @@ if __name__ == "__main__":
         "--test",
         choices=["a", "b", "c", "d", "e", "f"],
         help="Specify which test case to run.",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
     )
 
     parser.add_argument(
@@ -224,21 +240,27 @@ if __name__ == "__main__":
     goals = set_up_goals(data, "agent")
 
     declare_operators(data)
-    declare_methods(data)
+    declare_methods(data, args.debug)
     add_heuristic(data, "agent")
 
-    # Call the appropriate test case based on user input
-    if args.test == "a":
-        test_case_a(state, args.verbosity)
-    elif args.test == "b":
-        test_case_b(state, args.verbosity)
-    elif args.test == "c":
-        test_case_c(state, args.verbosity)
-    elif args.test == "d":
-        test_case_d(state, args.verbosity)
-    elif args.test == "e":
-        test_case_e(state, args.verbosity)
-    elif args.test == "f":
-        test_case_f(state, args.verbosity)
+    if args.debug:
+        pyhop.print_operators()
+        print()
+        pyhop.print_methods()
+
     else:
-        pyhop.pyhop(state, goals, args.verbosity)
+        # Call the appropriate test case based on user input
+        if args.test == "a":
+            test_case_a(state, args.verbosity)
+        elif args.test == "b":
+            test_case_b(state, args.verbosity)
+        elif args.test == "c":
+            test_case_c(state, args.verbosity)
+        elif args.test == "d":
+            test_case_d(state, args.verbosity)
+        elif args.test == "e":
+            test_case_e(state, args.verbosity)
+        elif args.test == "f":
+            test_case_f(state, args.verbosity)
+        else:
+            pyhop.pyhop(state, goals, args.verbosity)
