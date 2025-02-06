@@ -44,6 +44,18 @@ def make_method(name, rule):
     return method
 
 
+def _get_tech_for_sort(method_entry):
+    name, _ = method_entry
+    if "iron" in name:
+        return 3
+    elif "stone" in name:
+        return 2
+    elif "wooden" in name:
+        return 1
+    else:
+        return 0
+
+
 def declare_methods(data, is_debug=False):
     # some recipes are faster than others for the same product even though they might require extra tools
     # sort the recipes so that faster recipes go first
@@ -55,38 +67,44 @@ def declare_methods(data, is_debug=False):
 
     for recipet_name, rule in data["Recipes"].items():
 
-        match1 = re.fullmatch(r".+ for (.+)", recipet_name)
-        match2 = re.fullmatch(r"craft (.+) at bench", recipet_name)
-        match3 = re.fullmatch(r"craft (.+)", recipet_name)
+        match = (
+            re.fullmatch(r".+ for (.+)", recipet_name)
+            or re.fullmatch(r"craft (.+) at bench", recipet_name)
+            or re.fullmatch(r"craft (.+)", recipet_name)
+        )
 
-        if match1:
-            resource_name = match1.group(1)
+        if match:
+            resource_name = match.group(1)
             task_name = "produce_{}".format(resource_name)
 
             if task_name not in tasks:
                 tasks[task_name] = []
 
-            tasks[task_name].append(make_method(recipet_name, rule))
-
-        elif match2 or match3:
-            task_name = "produce_{}".format(
-                match2.group(1) if match2 else match3.group(1)
-            )
-            tasks[task_name] = [make_method(recipet_name, rule)]
+            methods = recipet_name, make_method(recipet_name, rule)
+            tasks[task_name].append(methods)
 
         else:
-            tasks[recipet_name] = [make_method(recipet_name, rule)]
+            tasks[recipet_name] = [
+                (recipet_name, make_method(recipet_name, rule))
+            ]
+
+    # order methods based on technology
+    for task, method_entries in tasks.items():
+        ordered_entries = sorted(method_entries, key=_get_tech_for_sort)
+        tasks[task] = ordered_entries
 
     # TODO order methods
 
     if is_debug:
         print("tasks:")
-        for task, methods in tasks.items():
+        for task, method_entries in tasks.items():
             print(task)
-            for met in methods:
-                print("\t", repr(met("", "")))
+            for entry in method_entries:
+                name, met = entry
+                print("\t", name, "\t", repr(met("", "")))
 
-    for task, methods in tasks.items():
+    for task, method_entries in tasks.items():
+        methods = [method for name, method in method_entries]
         pyhop.declare_methods(task, *methods)
 
 
@@ -131,6 +149,7 @@ def add_heuristic(data, ID):
     # do not change parameters to heuristic(), but can add more heuristic functions with the same parameters:
     # e.g. def heuristic2(...); pyhop.add_check(heuristic2)
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
+        # TODO
         # your code here
         return False  # if True, prune this branch
 
