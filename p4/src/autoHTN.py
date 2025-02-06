@@ -160,13 +160,13 @@ def add_heuristic(data, ID):
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
         curr_task_name = _get_task_name(curr_task)
 
-        if curr_task_name.startswith("produce_"):
+        if re.fullmatch(r"produce_.+", curr_task_name):
             return (
                 sum(
                     _get_task_name(task) == curr_task_name
                     for task in calling_stack
                 )
-                > 1
+                > 3
             )
         # TODO
         # your code here
@@ -317,9 +317,16 @@ if __name__ == "__main__":
 
             pyhop.pyhop(
                 state,
-                [("have_enough", "agent", "ingot", 1)],
+                [("have_enough", "agent", "cobble", 8)],
                 verbose=args.verbosity,
             )
+
+#            state.cobble["agent"] = 10
+#            pyhop.pyhop(
+#                state,
+#                [("have_enough", "agent", "furnace", 1)],
+#                verbose=args.verbosity,
+#            )
 
 #            pyhop.pyhop(
 #                state,
