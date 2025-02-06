@@ -1,5 +1,6 @@
 import pyhop
 import json
+import re
 
 
 def check_enough(state, ID, item, num):
@@ -23,10 +24,22 @@ pyhop.declare_methods("produce", produce)
 
 
 def make_method(name, rule):
-    def method(state, ID):
-        # your code here
-        pass
+    requires = rule.get("Requires", {})
+    consumes = rule.get("Consumes", {})
+    requires_and_consumes = {**requires, **consumes}
 
+    def method(state, ID):
+        # list of have_enough
+        opt = [
+            ("have_enough", ID, item, amount)
+            for item, amount in requires_and_consumes.items()
+        ]
+        # op_ method
+        op = ("op_{}".format(name), ID)
+        opt.append(op)
+        return opt
+
+    method.__name__ = name
     return method
 
 
@@ -36,21 +49,63 @@ def declare_methods(data):
 
     # your code here
     # hint: call make_method, then declare the method to pyhop using pyhop.declare_methods('foo', m1, m2, ..., mk)
-    pass
+
+    tasks = {}
+
+    for recipet_name, rule in data["Recipes"].items():
+
+        match = re.fullmatch(r".+ for (.+)", recipet_name)
+
+        if match:
+            resource_name = match.group(1)
+            method_name = "produce_{}".format(resource_name)
+
+            if method_name not in tasks:
+                tasks[method_name] = []
+
+            tasks[method_name].append(make_method(recipet_name, rule))
+
+        else:
+            tasks[recipet_name] = [make_method(recipet_name, rule)]
+
+    for task, methods in tasks.items():
+        pyhop.declare_methods(task, *methods)
 
 
 def make_operator(rule):
-    def operator(state, ID):
-        # your code here
-        pass
+    name, content = rule
+    produces = content["Produces"]
+    requires = content.get("Requires", {})
+    consumes = content.get("Consumes", {})
+    time = content["Time"]
 
+    requires_and_consumes = {**requires, **consumes}
+
+    def operator(state, ID):
+        if state.time[ID] >= time and all(
+            getattr(state, key)[ID] >= value
+            for key, value in requires_and_consumes.items()
+        ):
+            for item, amount in produces:
+                state.getattr(item)[ID] += amount
+
+            for item, amount in consumes:
+                state.getattr(item)[ID] -= amount
+
+            state.time[ID] -= time
+            return state
+        return False
+
+    operator.__name__ = "op_{}".format(name)
     return operator
 
 
 def declare_operators(data):
     # your code here
     # hint: call make_operator, then declare the operator to pyhop using pyhop.declare_operators(o1, o2, ..., ok)
-    pass
+
+    ops = [make_operator(rule) for rule in data["Recipes"].items()]
+    pyhop.declare_operators(*ops)
 
 
 def add_heuristic(data, ID):
@@ -101,10 +156,13 @@ if __name__ == "__main__":
     declare_methods(data)
     add_heuristic(data, "agent")
 
-    # pyhop.print_operators()
-    # pyhop.print_methods()
+    pyhop.print_operators()
+    print()
+    pyhop.print_methods()
 
     # Hint: verbose output can take a long time even if the solution is correct;
     # try verbose=1 if it is taking too long
-    pyhop.pyhop(state, goals, verbose=3)
+
+    # FIXME
+    # pyhop.pyhop(state, goals, verbose=3)
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
