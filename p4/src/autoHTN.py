@@ -1,3 +1,4 @@
+import argparse
 import pyhop
 import json
 import re
@@ -67,6 +68,8 @@ def declare_methods(data):
 
         else:
             tasks[recipet_name] = [make_method(recipet_name, rule)]
+
+    # TODO order methods
 
     for task, methods in tasks.items():
         pyhop.declare_methods(task, *methods)
@@ -143,25 +146,99 @@ def set_up_goals(data, ID):
     return goals
 
 
-if __name__ == "__main__":
-    rules_filename = "crafting.json"
+def test_case_a(state, verbose):
+    state.time = 1
+    state.plank["agent"] = 1
+    pyhop.pyhop(state, [("have_enough", "agent", "plank", 1)], verbose=verbose)
 
+
+def test_case_b(state, verbose):
+    state.time = 300
+    state.plank["agent"] = 0
+    pyhop.pyhop(state, [("have_enough", "agent", "plank", 1)], verbose=verbose)
+
+
+def test_case_c(state, verbose):
+    state.time = 10
+    state.plank["agent"] = 3
+    state.stick["agent"] = 2
+    pyhop.pyhop(
+        state, [("have_enough", "agent", "wooden_pickaxe", 1)], verbose=verbose
+    )
+
+
+def test_case_d(state, verbose):
+    state.time = 100
+    pyhop.pyhop(
+        state, [("have_enough", "agent", "iron_pickaxe", 1)], verbose=verbose
+    )
+
+
+def test_case_e(state, verbose):
+    state.time = 175
+    pyhop.pyhop(
+        state,
+        [
+            ("have_enough", "agent", "cart", 1),
+            ("have_enough", "agent", "rail", 10),
+        ],
+        verbose=verbose,
+    )
+
+
+def test_case_f(state, verbose):
+    state.time = 250
+    pyhop.pyhop(
+        state,
+        [
+            ("have_enough", "agent", "cart", 1),
+            ("have_enough", "agent", "rail", 20),
+        ],
+        verbose=verbose,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run a specific test case.")
+    parser.add_argument(
+        "--test",
+        choices=["a", "b", "c", "d", "e", "f"],
+        help="Specify which test case to run.",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbosity",
+        action="count",
+        default=0,
+        help="Increase output verbosity",
+    )
+
+    args = parser.parse_args()
+
+    rules_filename = "crafting.json"
     with open(rules_filename) as f:
         data = json.load(f)
 
-    state = set_up_state(data, "agent", time=239)  # allot time here
+    state = set_up_state(data, "agent", time=239)
     goals = set_up_goals(data, "agent")
 
     declare_operators(data)
     declare_methods(data)
     add_heuristic(data, "agent")
 
-    pyhop.print_operators()
-    print()
-    pyhop.print_methods()
-
-    # Hint: verbose output can take a long time even if the solution is correct;
-    # try verbose=1 if it is taking too long
-
-    pyhop.pyhop(state, goals, verbose=3)
-    # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
+    # Call the appropriate test case based on user input
+    if args.test == "a":
+        test_case_a(state, args.verbosity)
+    elif args.test == "b":
+        test_case_b(state, args.verbosity)
+    elif args.test == "c":
+        test_case_c(state, args.verbosity)
+    elif args.test == "d":
+        test_case_d(state, args.verbosity)
+    elif args.test == "e":
+        test_case_e(state, args.verbosity)
+    elif args.test == "f":
+        test_case_f(state, args.verbosity)
+    else:
+        pyhop.pyhop(state, goals, args.verbosity)
