@@ -86,11 +86,11 @@ def make_operator(rule):
             getattr(state, key)[ID] >= value
             for key, value in requires_and_consumes.items()
         ):
-            for item, amount in produces:
-                state.getattr(item)[ID] += amount
+            for item, amount in produces.items():
+                getattr(state, item)[ID] += amount
 
-            for item, amount in consumes:
-                state.getattr(item)[ID] -= amount
+            for item, amount in consumes.items():
+                getattr(state, item)[ID] -= amount
 
             state.time[ID] -= time
             return state
@@ -163,6 +163,5 @@ if __name__ == "__main__":
     # Hint: verbose output can take a long time even if the solution is correct;
     # try verbose=1 if it is taking too long
 
-    # FIXME
-    # pyhop.pyhop(state, goals, verbose=3)
+    pyhop.pyhop(state, goals, verbose=3)
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
