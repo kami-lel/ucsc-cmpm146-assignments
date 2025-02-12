@@ -159,20 +159,51 @@ def add_heuristic(data, ID):
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
         curr_task_name = curr_task[0]
 
-        if curr_task_name in (
-            "produce_wooden_axe",
-            "produce_stone_axe",
-            "produce_iron_axe",
-        ):
+        # axe dep
+        if curr_task_name == "produce_wooden_axe":
             return not any(task[0] == "op_punch for wood" for task in plan)
+
+        elif curr_task_name == "produce_stone_axe":
+            return not any(
+                task[0]
+                in ("op_punch for wood", "op_craft wooden_axe at bench")
+                for task in plan
+            )
+
+        elif curr_task_name == "produce_iron_axe":
+            return not any(
+                task[0]
+                in (
+                    "op_punch for wood",
+                    "op_craft wooden_axe at bench",
+                    "op_craft stone_axe at bench",
+                    "op_craft stone_axe at bench",
+                )
+                for task in plan
+            )
+
+        # pickaxe
+        elif curr_task_name == "produce_stone_pickaxe":
+            print("a" * 20)  # HACK
+            return not any(
+                task[0] == "op_craft wooden_pickaxe at bench" for task in plan
+            )
+
+        elif curr_task_name == "produce_iron_pickaxe":
+            print("b" * 20)  # HACK
+            return not any(
+                task[0]
+                in (
+                    "op_craft wooden_pickaxe at bench",
+                    "op_craft stone_pickaxe at bench",
+                )
+                for task in plan
+            )
 
     pyhop.add_check(heuristic)
 
 
 def set_up_state(data, ID, time=0):
-    # HACK
-    global cnt
-    cnt = 0
     state = pyhop.State("state")
     state.time = {ID: time}
 
@@ -321,7 +352,7 @@ if __name__ == "__main__":
             state.time["agent"] = 50000
             pyhop.pyhop(
                 state,
-                [("have_enough", "agent", "wood", 1)],
+                [("have_enough", "agent", "cobble", 1)],
                 verbose=args.verbosity,
             )
 
