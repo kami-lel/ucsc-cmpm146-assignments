@@ -6,9 +6,9 @@ Tool Dependency:
 - furnace: bench, cobble
 - axe:
 
-    - iron_axe: bench, ingot, stick
     - stone_axe: bench, cobble, stick
     - wooden_axe: bench, plank, stick
+    - iron_axe: bench, ingot, stick
 
 - pickaxe:
 
@@ -30,3 +30,6 @@ Items:
 - stick: plank
 - rail: ingot, stick
 - cart: ingot
+
+----
+

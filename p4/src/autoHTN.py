@@ -67,6 +67,9 @@ def declare_methods(data, is_debug=False):
     tasks = {}
 
     for recipet_name, rule in data["Recipes"].items():
+        # HACK
+        if recipet_name in ("iron_axe for wood",):
+            continue
 
         match = (
             re.fullmatch(r".+ for (.+)", recipet_name)
@@ -157,7 +160,18 @@ def add_heuristic(data, ID):
     # e.g. def heuristic2(...); pyhop.add_check(heuristic2)
 
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
+        # print("\n" * 10)
+        # print("curr task:\n", curr_task)
+        # print("tasks:\n", tasks)
+        # print("plan:\n", plan)
+        # print("depth:\n", depth)
+        # print("calling stack:\n", calling_stack)
+
         curr_task_name = curr_task[0]
+        if curr_task_name == "produce_wooden_axe":
+            return any(task[0] == "produce_wood" for task in calling_stack)
+
+        return False  # HACK
 
         # axe dep
         if curr_task_name == "produce_wooden_axe":
@@ -166,7 +180,11 @@ def add_heuristic(data, ID):
         elif curr_task_name == "produce_stone_axe":
             return not any(
                 task[0]
-                in ("op_punch for wood", "op_craft wooden_axe at bench")
+                in (
+                    "op_punch for wood",
+                    "op_craft wooden_axe at bench",
+                    "op_craft wooden_pickaxe at bench",
+                )
                 for task in plan
             )
 
@@ -182,23 +200,23 @@ def add_heuristic(data, ID):
                 for task in plan
             )
 
-        # pickaxe
-        elif curr_task_name == "produce_stone_pickaxe":
-            print("a" * 20)  # HACK
-            return not any(
-                task[0] == "op_craft wooden_pickaxe at bench" for task in plan
-            )
+        # # pickaxe
+        # elif curr_task_name == "produce_stone_pickaxe":
+        #     print("a" * 20)  # HACK
+        #     return not any(
+        #         task[0] == "op_craft wooden_pickaxe at bench" for task in plan
+        #     )
 
-        elif curr_task_name == "produce_iron_pickaxe":
-            print("b" * 20)  # HACK
-            return not any(
-                task[0]
-                in (
-                    "op_craft wooden_pickaxe at bench",
-                    "op_craft stone_pickaxe at bench",
-                )
-                for task in plan
-            )
+        # elif curr_task_name == "produce_iron_pickaxe":
+        #     print("b" * 20)  # HACK
+        #     return not any(
+        #         task[0]
+        #         in (
+        #             "op_craft wooden_pickaxe at bench",
+        #             "op_craft stone_pickaxe at bench",
+        #         )
+        #         for task in plan
+        #     )
 
     pyhop.add_check(heuristic)
 
@@ -352,7 +370,7 @@ if __name__ == "__main__":
             state.time["agent"] = 50000
             pyhop.pyhop(
                 state,
-                [("have_enough", "agent", "cobble", 1)],
+                [("have_enough", "agent", "wooden_axe", 1)],
                 verbose=args.verbosity,
             )
 
