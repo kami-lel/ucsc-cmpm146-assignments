@@ -1,0 +1,50 @@
+P5: Evolving Mario Levels – Writeup
+
+Selection Strategies in generate_successors: 
+• We implemented a mixed selection strategy that combines elitist, tournament, and roulette-wheel selection. 
+• Elitism: We retain the top 10% of the current population to ensure that the best individuals persist. 
+• Tournament Selection: A random sample of 3 individuals is chosen, and the best among them is selected. 
+  This balances exploration and exploitation. 
+• Roulette-Wheel Selection: This allows individuals to be chosen in proportion to their fitness, ensuring 
+  diversity in the gene pool. These strategies together help maintain a diverse yet increasingly fit 
+  population.
+
+Crossover in generate_children for the Grid Encoding: 
+• We use a uniform crossover approach. At each gene (i.e. grid cell), we choose the value from either parent 
+  based on a bias computed from their fitness. 
+• This method allows for a fine-grained mixing of features from both parents, rather than cutting the level 
+  by rows or columns. 
+• The uniform crossover was chosen because it provides more flexibility in recombining level features and 
+  encourages the emergence of novel, interesting patterns.
+
+Mutation in mutate for the Grid Encoding: 
+• We set a mutation rate of 5% per tile. 
+• When a mutation occurs, a new tile is selected using weighted probabilities, favoring more common and “safe” 
+  tiles (such as empty spaces or solid walls) while still allowing for occasional placement of blocks, enemies, or power-ups. 
+• Additional constraints are applied to prevent invalid configurations (e.g., pipes without proper 
+  structure or blocks floating in the air). 
+• This mutation operator introduces diversity without compromising level validity.
+
+Enhancements to the Fitness Function: 
+• In calculate_fitness for Individual_Grid, we extended the original fitness function by incorporating additional metrics 
+  from metrics.py such as rhythm, vertical variety, and enemy spacing. 
+• These extra metrics help ensure that evolved levels are not only playable but also visually appealing and engaging. 
+• Penalties for too many consecutive hazards and bonuses for well-placed power-ups were also included to refine the 
+  challenge and flow.
+
+Design Element Encoding (Individual_DE): 
+• The DE encoding uses a variable-length genome representing design elements (e.g., holes, platforms, enemies) that are 
+  applied sequentially to generate a level. 
+• We retained the variable-point crossover mechanism, which splits the design element sequence at random points and 
+  recombines them. This approach produces offspring with varied numbers and types of design elements, promoting diversity. 
+• The mutation operator for DE perturbs numeric parameters (such as x-positions, widths, and heights) using the 
+  offset_by_upto function. This ensures mutations stay within legal bounds and provides gradual adjustments to level features. 
+• Our modifications here aimed to balance the speed of convergence with the creativity of level design.
+
+Conclusion:
+The modifications to the selection strategies, fitness function, and genetic operators have collectively improved the quality 
+and diversity of generated levels. By mixing elitism, tournament, and roulette-wheel selection, the algorithm maintains high-
+quality traits while still exploring new configurations. The enhanced fitness functions and tailored mutation operators 
+contribute to evolving levels that are not only beatable but also fun and visually interesting.
+
+We would not like to be in the competetion, thanks!!!

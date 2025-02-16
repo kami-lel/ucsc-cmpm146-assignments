@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 
-def metrics(levelStr):
+def basic_metrics(levelStr):
     maxY = len(levelStr)
     maxX = len(levelStr[0])
 
@@ -246,6 +246,75 @@ def metrics(levelStr):
             'linearity': linearity,
             'solvability': 0}
 
+def additional_metrics(levelStr):
+    """Calculate additional metrics for level evaluation"""
+    maxY = len(levelStr)
+    maxX = len(levelStr[0])
+    
+    # Calculate rhythm (patterns of gameplay elements)
+    rhythm_score = 0
+    platform_lengths = []
+    gap_lengths = []
+    current_platform = 0
+    current_gap = 0
+    
+    for x in range(maxX):
+        if levelStr[maxY-1][x] == 'X':
+            if current_gap > 0:
+                gap_lengths.append(current_gap)
+                current_gap = 0
+            current_platform += 1
+        else:
+            if current_platform > 0:
+                platform_lengths.append(current_platform)
+                current_platform = 0
+            current_gap += 1
+            
+    # Reward consistent yet varied rhythms
+    if platform_lengths and gap_lengths:
+        platform_variance = np.var(platform_lengths) if len(platform_lengths) > 1 else 0
+        gap_variance = np.var(gap_lengths) if len(gap_lengths) > 1 else 0
+        rhythm_score = 1.0 / (1.0 + abs(platform_variance - gap_variance))
+    
+    # Calculate vertical variety
+    height_changes = []
+    current_height = maxY - 1
+    for x in range(1, maxX-1):
+        found_ground = False
+        for y in range(maxY-1, -1, -1):
+            if levelStr[y][x] in ['X', 'B', '?', 'M']:
+                if not found_ground:
+                    height_changes.append(abs(y - current_height))
+                    current_height = y
+                    found_ground = True
+                break
+    
+    vertical_variety = np.mean(height_changes) if height_changes else 0
+    
+    # Calculate enemy spacing
+    enemy_positions = []
+    for x in range(maxX):
+        for y in range(maxY):
+            if levelStr[y][x] == 'E':
+                enemy_positions.append(x)
+    
+    enemy_spacing = 0
+    if len(enemy_positions) > 1:
+        enemy_gaps = [enemy_positions[i+1] - enemy_positions[i] 
+                    for i in range(len(enemy_positions)-1)]
+        enemy_spacing = np.mean(enemy_gaps)
+    
+    return {
+        'rhythm': rhythm_score,
+        'verticalVariety': vertical_variety,
+        'enemySpacing': enemy_spacing
+    }
+
+def metrics(levelStr):
+    """Combine basic and additional metrics"""
+    basic = basic_metrics(levelStr)
+    additional = additional_metrics(levelStr)
+    return {**basic, **additional}
 
 if __name__ == "__main__":
     name = sys.argv[1]
