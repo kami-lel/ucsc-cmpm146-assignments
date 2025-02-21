@@ -64,19 +64,12 @@ class UserWebcamPlayer:
             rval, frame = vc.read()
             frame = self._process_frame(frame)
             key = cv2.waitKey(20)
-            if key == ord("0"):
-                key_pressed = 0
-                break
-            elif key == ord("1"):
-                key_pressed = 1
-                break
-            elif key == ord("2"):
-                key_pressed = 2
+            if key == 13:
                 break
 
         vc.release()
         cv2.destroyWindow("preview")
-        return key_pressed
+        return frame
 
     def _print_reference(self, row_or_col):
         print("reference:")
@@ -129,8 +122,22 @@ class UserWebcamPlayer:
         # The classification value should be 0, 1, or 2 for neutral, happy or surprise respectively
 
         # return an integer (0, 1 or 2), otherwise the code will throw an error
-        return img
-        pass
+
+        # resize the image
+        resized_img = cv2.resize(img, image_size)
+        normalized_img = resized_img / 255.0
+
+        # change dimensions
+        input_img = np.expand_dims(normalized_img, axis=0)
+        input_img = np.expand_dims(input_img, axis=-1)  # Add channel dimension
+
+        # Load the trained model
+        model = models.load_model("my_model.keras")
+
+        predictions = model.predict(input_img)
+        predicted_class = int(np.argmax(predictions[0]))
+
+        return predicted_class
 
     def get_move(self, board_state):
         row, col = None, None
